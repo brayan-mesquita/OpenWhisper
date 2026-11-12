@@ -94,7 +94,7 @@ the field that was focused when recording began.
 
 Download the signed Android beta from the public release page:
 
-**[Download OpenWhisper for Android](https://github.com/JamesHuckle/OpenWhisper/releases/latest/download/OpenWhisper-Android.apk)**
+**[Download OpenWhisper for Android](https://github.com/brayan-mesquita/OpenWhisper/releases/latest/download/OpenWhisper-Android.apk)**
 
 Android 0.2.0 and newer checks for signed releases in the background, notifies
 the user, verifies the downloaded APK, and opens Android's normal update

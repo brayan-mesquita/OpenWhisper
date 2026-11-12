@@ -100,7 +100,7 @@ Useful individual commands:
 
 The public beta is a signed, non-debuggable APK:
 
-**[Download OpenWhisper-Android.apk](https://github.com/JamesHuckle/OpenWhisper/releases/latest/download/OpenWhisper-Android.apk)**
+**[Download OpenWhisper-Android.apk](https://github.com/brayan-mesquita/OpenWhisper/releases/latest/download/OpenWhisper-Android.apk)**
 
 Download that file on the phone and open it from **My Files**. Samsung Auto
 Blocker may need to be disabled temporarily under **Settings > Security and
