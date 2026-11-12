@@ -14,7 +14,7 @@ $RepoRoot = (Resolve-Path (Split-Path -Parent $PSScriptRoot)).Path `
 $NotifyUpdate = $env:OPENWHISPER_SKIP_UPDATE_NOTIFY -ne "1"
 
 # GitHub repo (override with env OPENWHISPER_GITHUB_REPO)
-$GitHubRepo = if ($env:OPENWHISPER_GITHUB_REPO) { $env:OPENWHISPER_GITHUB_REPO } else { "JamesHuckle/OpenWhisper" }
+$GitHubRepo = if ($env:OPENWHISPER_GITHUB_REPO) { $env:OPENWHISPER_GITHUB_REPO } else { "brayan-mesquita/OpenWhisper" }
 
 # ── Preflight ──────────────────────────────────────────────────────────────────
 

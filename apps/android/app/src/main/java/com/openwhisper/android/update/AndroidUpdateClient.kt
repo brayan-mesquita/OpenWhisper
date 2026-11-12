@@ -72,7 +72,7 @@ class AndroidUpdateClient {
 
     private companion object {
         const val UPDATE_MANIFEST_URL =
-            "https://github.com/JamesHuckle/OpenWhisper/releases/latest/download/OpenWhisper-Android-update.json"
+            "https://github.com/brayan-mesquita/OpenWhisper/releases/latest/download/OpenWhisper-Android-update.json"
         const val CONNECT_TIMEOUT_MS = 15_000
         const val READ_TIMEOUT_MS = 60_000
         const val MAX_MANIFEST_LENGTH = 64 * 1024
