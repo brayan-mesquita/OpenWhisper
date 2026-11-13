@@ -1,224 +1,180 @@
-# WhisperFlow
+# OpenWhisper
 
-WhisperFlow is a cross-platform desktop dictation app that captures live speech, transcribes with OpenAI speech models, and inserts text into the focused input target.
+Ditado por voz com a inteligência artificial da OpenAI, direto no teclado que
+você já usa. Você fala, o OpenWhisper transcreve e o texto aparece no campo em
+que você estava digitando: WhatsApp, e-mail, navegador, notas, qualquer app.
 
-## Push-to-release contract (read this first)
+Este repositório é um fork do [OpenWhisper original](https://github.com/JamesHuckle/OpenWhisper)
+com foco no **app para Android**, adaptado para quem fala **português do Brasil**.
 
-Every normal `git push origin main` is a coordinated production release of
-the web, Windows, and Android apps. Configure the repository hooks once with:
+**[⬇️ Baixar o OpenWhisper para Android](https://github.com/brayan-mesquita/OpenWhisper/releases/latest/download/OpenWhisper-Android.apk)**
 
-```powershell
-git config core.hooksPath scripts/hooks
+---
+
+## Como funciona no celular
+
+1. Você toca num campo de texto e o teclado abre normalmente.
+2. Um pequeno botão de microfone do OpenWhisper aparece ao lado do teclado.
+3. Toque uma vez para começar a falar e outra vez para terminar.
+4. Em poucos segundos o texto transcrito é inserido onde estava o cursor.
+   Uma cópia também vai para a área de transferência, por segurança.
+
+O microfone some sozinho quando o teclado fecha, quando o campo não aceita
+texto e em **campos de senha ou marcados como sensíveis**.
+
+## Compatível com o Teclado Samsung
+
+O OpenWhisper **não substitui nem modifica o seu teclado**. Você continua usando
+o Teclado Samsung (ou o Gboard, ou outro), com seus atalhos, emojis e correção
+automática. O OpenWhisper só acrescenta o botão de microfone por cima, ao lado
+da tecla **A**.
+
+Isso é possível porque o app usa o recurso de **acessibilidade** do Android,
+que você ativa uma única vez. Não existe outra forma oficial de um app colocar
+um botão dentro do teclado de outra empresa.
+
+Testado num **Samsung Galaxy S23 Ultra** (Android 17). Em outros modelos Samsung
+deve funcionar igual, mas vale observar o posicionamento do botão ao girar a
+tela ou usar janelas divididas.
+
+## Instalação
+
+1. **Baixe o APK** pelo link acima, direto no celular.
+2. **Abra o arquivo** pelo app *Meus Arquivos*. Se o Android pedir, permita
+   instalar apps desta fonte.
+   - Nos Samsung, o **Bloqueador automático** pode impedir a instalação.
+     Desative em *Configurações > Segurança e privacidade > Bloqueador
+     automático*, instale e depois ative de novo.
+3. **Abra o OpenWhisper** e conceda a permissão do **microfone** e das
+   **notificações**.
+4. Toque em **Ativar o microfone de acessibilidade**, escolha
+   **OpenWhisper dictation** e ative. O Android mostra um aviso sobre o acesso
+   que o app terá; leia e confirme se estiver de acordo.
+5. Cole a sua **chave da API da OpenAI** e toque em **Salvar com segurança**.
+   Você cria a chave em [platform.openai.com](https://platform.openai.com/api-keys);
+   o uso é cobrado pela OpenAI na sua conta.
+6. Desligue a **Transcrição de demonstração** para usar o microfone de verdade.
+
+### Atualizações automáticas
+
+Depois da primeira instalação, você não precisa baixar mais nada. O app verifica
+novas versões ao ser aberto e uma vez por dia, mostra uma notificação e, com um
+toque, baixa e instala a atualização. O Android sempre pede a sua confirmação.
+Suas configurações e a chave da OpenAI são mantidas.
+
+## Configurações
+
+### Idioma falado
+
+O padrão é **Português (Brasil)**. Fixar o idioma reduz erros de transcrição.
+Termos técnicos em inglês continuam sendo reconhecidos. Também há as opções
+Automático, Inglês e Espanhol.
+
+### Modelo da OpenAI
+
+Você escolhe entre mais precisão ou menor custo:
+
+| Modelo | Indicado para | Custo aproximado |
+|---|---|---|
+| **GPT Transcribe** (padrão) | Melhor precisão e melhor uso do dicionário | US$ 0,0045 por minuto |
+| **GPT-4o mini Transcribe** | Economizar | ~US$ 0,003 por minuto |
+| GPT-4o Transcribe | Modelo antigo, descontinuado pela OpenAI | ~US$ 0,006 por minuto |
+| Whisper | Modelo antigo, descontinuado pela OpenAI | US$ 0,006 por minuto |
+
+Os preços são referências da OpenAI e podem mudar; o valor oficial está no site
+da OpenAI.
+
+### Dicionário pessoal
+
+Coloque, um por linha, as palavras que a transcrição costuma errar: nomes de
+pessoas e empresas, siglas e termos técnicos, inclusive em inglês. Por exemplo:
+
+```
+Git
+GitHub
+deploy
+MCP
 ```
 
-After that, the supported workflow is simply:
+Esses termos são enviados junto com cada transcrição para orientar o
+reconhecimento. Cabem até 100 termos.
 
-```powershell
-git add -A
-git commit -m "Describe the change"
-git push origin main
-```
+### Arquivos de áudio
 
-The commit hook assigns one new version to both native apps and increments the
-Android `versionCode`. The push hook requires a clean tree, runs the web,
-worker, desktop, and Android test/build checks, creates signed Windows and
-Android packages, publishes both update feeds to one GitHub Release, and only
-then allows the `main` push to finish. Vercel deploys `apps/web` from `main`.
+Também dá para transcrever um arquivo de áudio salvo no celular. O app guarda
+as 10 gravações mais recentes, para que nada se perca se a internet cair no
+meio da transcrição.
 
-Users receive updates as follows:
+## Privacidade e segurança
 
-- Windows checks the signed feed at startup, announces the new version, and
-  installs it after the user confirms.
-- Android 0.2.0 and newer checks when opened and daily while its accessibility
-  service is enabled, posts an update notification, verifies the APK, and opens
-  Android's required installation confirmation.
-- The web app is replaced by the Vercel deployment; visitors receive the new
-  version on their next page load.
+- **Sua chave da OpenAI fica criptografada** no celular, protegida pelo
+  armazenamento seguro do Android, e não entra em backups.
+- **O áudio vai direto do seu celular para a OpenAI.** Não há servidor
+  intermediário.
+- **O texto transcrito não é registrado** nos logs do sistema.
+- **Campos de senha e sensíveis são ignorados**: o microfone não aparece neles.
+- **Atualizações são verificadas antes de instalar**: o app só aceita um APK do
+  mesmo app, de versão mais nova e assinado com a mesma chave.
 
-A native release is deliberately a full signed rebuild on every push, even for
-a documentation-only change. Do not use `--no-verify`, `SKIP_RELEASE`, or
-`OPENWHISPER_SKIP_VERSION_BUMP` for a production push: those escape hatches
-break the guarantee that all apps share the release. If a hook fails, fix the
-reported problem and rerun the normal commit or push; a retry safely repairs
-the same release.
+O que o app **não** protege: um celular com root ou comprometido está fora da
+proteção do Android.
 
-## Run website locally
+## Novidades deste fork
+
+### 0.3.1
+- Corrigido: em campos vazios, o texto de exemplo (como **"Mensagem"** no
+  WhatsApp) aparecia antes da transcrição. Agora o texto é inserido pelo mesmo
+  canal que o teclado usa, que informa o conteúdo real do campo.
+
+### 0.3.0
+- Escolha do **modelo da OpenAI** nas configurações.
+- **Dicionário pessoal** para termos que a transcrição costuma errar.
+- **Idioma falado**, com português do Brasil como padrão.
+- App **traduzido para português**.
+- Segurança do atualizador reforçada: outros apps não conseguem mais forjar uma
+  atualização, e o APK baixado é conferido antes da instalação.
+
+## Problemas comuns
+
+| Problema | O que fazer |
+|---|---|
+| O microfone não aparece | Confira se *OpenWhisper dictation* está ativo em *Configurações > Acessibilidade > Apps instalados*. Alguns Samsung desativam o serviço depois de uma atualização do sistema. |
+| O microfone some depois de um tempo | Em *Configurações > Aplicativos > OpenWhisper > Bateria*, escolha **Sem restrições**. |
+| Aparece uma frase em inglês fixa | A **Transcrição de demonstração** está ligada. Desligue nas configurações. |
+| Erro de transcrição | Verifique a internet e se a chave da OpenAI está salva e tem crédito. A transcrição fica na área de transferência quando a inserção falha. |
+| Não instala a atualização | Permita que o OpenWhisper instale apps em *Configurações > Aplicativos > OpenWhisper > Instalar apps desconhecidos*. |
+
+## Versão para computador (Windows)
+
+O projeto original também tem um app de ditado para Windows. Ele continua
+recebendo atualizações pelo [repositório original](https://github.com/JamesHuckle/OpenWhisper/releases);
+este fork não publica a versão para Windows.
+
+---
+
+## Para desenvolvedores
+
+O app Android fica em [`apps/android`](apps/android) (Kotlin, Android 9 ou
+mais novo). Para compilar no Linux é preciso o JDK 17 e o Android SDK
+(plataforma 36):
 
 ```bash
-cd apps/web
-npm install
-npm run dev
+cd apps/android
+./gradlew testDebugUnitTest assembleDebug
 ```
 
-Opens at [http://localhost:3000](http://localhost:3000). For production build: `npm run build && npm start`.
+Detalhes de arquitetura, testes e publicação estão em
+[`docs/android.md`](docs/android.md), e o checklist de testes de aceitação em
+[`docs/android-acceptance.md`](docs/android-acceptance.md).
 
-## Run OpenWhisper app locally
+Outras partes do repositório, herdadas do projeto original:
 
-**Bash / WSL / Git Bash:**
-```bash
-./scripts/run-local.sh
-```
+- `apps/desktop`: app para Windows (Tauri)
+- `apps/worker`: serviço em Python usado pelo app para Windows
+- `apps/web`: site do projeto
+- `docs/architecture.md`: arquitetura geral
 
-**PowerShell (Windows):**
-```powershell
-.\scripts\run-local.ps1
-```
-
-**Prerequisites:** [Rust](https://rustup.rs), [uv](https://docs.astral.sh/uv/) (Python), [Node.js](https://nodejs.org). On Linux/WSL, install native deps: `sudo apt-get install -y pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf`
-
-On WSL with GPU issues, use software rendering:
-```bash
-LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe WEBKIT_DISABLE_DMABUF_RENDERER=1 ./scripts/run-local.sh
-```
-
-## Rebuild the desktop app
-
-From the repo root, run:
-
-```powershell
-cd apps/desktop
-npm install
-npm run tauri:build
-```
-
-That rebuilds the local Tauri desktop app bundle.
-
-## Android companion (Samsung Keyboard compatible)
-
-`apps/android` is a native Kotlin companion app. Android does not provide a
-supported way for a third-party app to modify Samsung Keyboard itself, so the
-app keeps the selected keyboard and docks a small, user-authorized accessibility
-mic beside the keyboard's A key. It records on device, sends a WAV file directly
-to the OpenAI audio transcription endpoint, and safely inserts the result into
-the field that was focused when recording began.
-
-Download the signed Android beta from the public release page:
-
-**[Download OpenWhisper for Android](https://github.com/brayan-mesquita/OpenWhisper/releases/latest/download/OpenWhisper-Android.apk)**
-
-Android 0.2.0 and newer checks for signed releases in the background, notifies
-the user, verifies the downloaded APK, and opens Android's normal update
-confirmation. In-place updates keep existing settings and the encrypted API
-key. Users on the original 0.1.0 beta must install 0.2.0 manually once to gain
-the updater.
-
-On Windows, the repository can install its own JDK, Android SDK, and API 36
-emulator under the ignored `.tools` directory:
-
-```powershell
-.\scripts\bootstrap-android.ps1 -WithEmulator
-.\scripts\test-android.ps1
-```
-
-Build only:
-
-```powershell
-.\scripts\android.ps1 assembleDebug
-```
-
-APK output: `apps/android/app/build/outputs/apk/debug/app-debug.apk`.
-Installation, Samsung device setup, architecture, privacy constraints, and the
-test matrix are documented in [`docs/android.md`](docs/android.md).
-
-Maintainers can create and publish a signed update with:
-
-```powershell
-.\scripts\setup-android-signing.ps1 # first release only
-.\scripts\release-android.ps1
-```
-
-To rebuild the full Windows installer instead, run from the repo root:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\build-windows-installer.ps1
-```
-
-Installer output: `artifacts\windows-installer\OpenWhisper_x64-setup.exe` (with the
-versioned and signed build outputs also kept under
-`%USERPROFILE%\openwhisper-cargo-target\release\bundle\nsis\`).
-
-Every normal push to `main` runs the local release hook. After the signed
-release and public update feeds are verified, the hook silently updates the
-installed `%LOCALAPPDATA%\OpenWhisper` copy to the same version and restarts it
-only when it was already running. `SKIP_RELEASE=1` intentionally bypasses both
-the release and this local installation sync.
-
-This repository uses a hybrid architecture:
-
-- `apps/desktop`: Tauri 2 desktop shell (UI + tray + local control plane)
-- `apps/android`: native Android companion and accessibility keyboard overlay
-- `apps/worker`: Python worker for OpenAI transcription and text post-processing
-- `apps/web`: Next.js marketing site and download page (deployed on Vercel)
-- `packages/protocol`: shared JSON protocol contract for IPC
-- `docs`: architecture and milestone plan
-
-## Why this architecture
-
-- Native desktop reliability for global hotkeys, focus tracking, and text insertion
-- Python velocity for model routing and transcription orchestration
-- Strict local IPC boundary to keep modules clean and replaceable
-
-## Quick start
-
-1. Create environment file:
-   - `cp .env.example .env`
-   - `OPENAI_API_KEY` is optional in development. In the desktop app, users can paste their key in Settings.
-2. Install Python worker dependencies:
-   - `cd apps/worker`
-   - `uv sync`
-3. Install desktop dependencies:
-   - `cd ../desktop`
-   - `npm install`
-4. Install Rust toolchain (required by Tauri):
-   - `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-   - Restart shell, then verify with `cargo --version`.
-5. Install Linux native dependencies (Linux/WSL only):
-   - `sudo apt-get update`
-   - `sudo apt-get install -y pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf`
-6. Run desktop app:
-   - `npm run tauri:dev`
-   - On WSL GPU-constrained setups, use software rendering:
-     - `LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe WEBKIT_DISABLE_DMABUF_RENDERER=1 npm run tauri:dev`
-
-## Releasing a new version
-
-Releases happen **automatically** when you commit and push to `main`. The
-repository hooks synchronize versions, test all components, build both native
-apps locally, and publish one coordinated GitHub Release.
-
-**Prerequisites (one-time):**
-- [Rust](https://rustup.rs) (`winget install -e --id Rustlang.Rustup`)
-- Visual Studio Build Tools (Desktop C++ workload)
-- [GitHub CLI](https://cli.github.com) (`winget install --id GitHub.cli`, then `gh auth login`)
-- [uv](https://docs.astral.sh/uv/), [Node.js](https://nodejs.org)
-- Hook path configured: `git config core.hooksPath scripts/hooks`
-- **Updater signing keys** (one-time): `.\scripts\setup-updater-keys.ps1`
-- **Android signing key** (one-time): `.\scripts\setup-android-signing.ps1`
-- Vercel project connected to this repository with production branch `main`
-  and root directory `apps/web`
-
-**Release workflow:**
-```powershell
-# Versions are assigned by the commit hook. Commit and push normally:
-git add -A
-git commit -m "Describe the change"
-git push origin main
-```
-
-When you push to `main`, the pre-push hook will:
-
-1. Test and production-build the website.
-2. Test the Python worker and desktop UI.
-3. Test, lint, build, sign, and verify the Android APK.
-4. Build and sign the Tauri Windows NSIS installer and updater artifact.
-5. Tag the commit, create/update the GitHub Release, and publish both update
-   feeds and stable download assets.
-6. Re-download and verify the public Android APK and both feed versions.
-7. Allow the push to complete, after which Vercel deploys the website.
-
-**Auto-update:** Installed native apps announce an available update and guide
-the user through installation. The desktop app relaunches afterward. Android
-requires a system confirmation for sideloaded updates.
-
-Detailed commands and production roadmap are in `docs/architecture.md`.
-
+> **Atenção:** os scripts de release em `scripts/` e os hooks do git em
+> `scripts/hooks/` foram feitos para Windows e publicam uma release a cada push
+> na `main`. Eles ficam desligados até alguém rodar
+> `git config core.hooksPath scripts/hooks`.
