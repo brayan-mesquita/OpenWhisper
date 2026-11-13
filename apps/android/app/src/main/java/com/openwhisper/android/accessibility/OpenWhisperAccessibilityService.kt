@@ -78,15 +78,18 @@ class OpenWhisperAccessibilityService : AccessibilityService() {
         val accessibilityEditor = EditorSessionController(editorProvider)
         val editorController = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             InputConnectionEditorSessionController(
-                provider = {
-                    if (editorProvider.focusedEditor() == null) {
-                        accessibilityInputMethod?.currentEditor()
-                    } else {
-                        null
-                    }
-                },
+                provider = { accessibilityInputMethod?.currentEditor() },
             ).also { inputConnectionEditor = it }
-                .let { RoutingEditorSessionPort(it, accessibilityEditor) }
+                .let { inputConnection ->
+                    RoutingEditorSessionPort(
+                        inputConnection = inputConnection,
+                        accessibility = accessibilityEditor,
+                        isProtected = {
+                            editorProvider.focusedEditor()?.snapshot()
+                                ?.let { it.isPassword || it.isSensitive } == true
+                        },
+                    )
+                }
         } else {
             accessibilityEditor
         }

@@ -63,12 +63,22 @@ class EditorSessionController(
     }
 }
 
+/**
+ * Prefers the keyboard's InputConnection, which reports the field's real text and
+ * inserts at the real cursor. Accessibility nodes of many apps (WhatsApp, Messages)
+ * report an empty field's placeholder ("Mensagem") as its text, which leaked into
+ * the dictated result. Accessibility remains the fallback, and its password /
+ * sensitive flags still veto an InputConnection session ([isProtected]).
+ */
 class RoutingEditorSessionPort(
     private val inputConnection: EditorSessionPort,
     private val accessibility: EditorSessionPort,
+    private val isProtected: () -> Boolean = { false },
 ) : EditorSessionPort {
-    override fun begin(): EditorSession? =
-        inputConnection.begin() ?: accessibility.begin()
+    override fun begin(): EditorSession? {
+        val session = inputConnection.begin() ?: return accessibility.begin()
+        return if (isProtected()) null else session
+    }
 
     override fun commit(session: EditorSession, transcript: String): EditorCommitResult =
         when (session.channel) {

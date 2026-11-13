@@ -96,6 +96,50 @@ class EditorSessionControllerTest {
         assertEquals("dictated", inputConnection.transcript)
         assertNull(accessibility.transcript)
     }
+
+    @Test
+    fun fallsBackToAccessibilityWhenThereIsNoInputConnection() {
+        val accessibility = RecordingSessionPort(
+            EditorSession("accessibility", channel = EditorSessionChannel.Accessibility),
+        )
+        val routing = RoutingEditorSessionPort(RecordingSessionPort(null), accessibility)
+
+        assertEquals(EditorSessionChannel.Accessibility, routing.begin()?.channel)
+    }
+
+    @Test
+    fun accessibilityPasswordOrSensitiveFlagVetoesTheInputConnection() {
+        val routing = RoutingEditorSessionPort(
+            inputConnection = RecordingSessionPort(
+                EditorSession("input", channel = EditorSessionChannel.InputConnection),
+            ),
+            accessibility = RecordingSessionPort(null),
+            isProtected = { true },
+        )
+
+        assertNull(routing.begin())
+    }
+
+    @Test
+    fun emptyFieldWithPlaceholderGetsOnlyTheTranscriptThroughInputConnection() {
+        // The keyboard connection reports the real (empty) text, not "Mensagem".
+        val editor = object : InputConnectionEditor {
+            var committed = ""
+            override val stableId = "input:1"
+            override val availability = EditorAvailability()
+            override fun snapshot() = EditorSnapshot("", 0, 0)
+            override fun commitText(text: String): Boolean {
+                committed = text
+                return true
+            }
+        }
+        val controller = InputConnectionEditorSessionController({ editor })
+        val routing = RoutingEditorSessionPort(controller, RecordingSessionPort(null))
+
+        val session = requireNotNull(routing.begin())
+        assertEquals(EditorCommitResult.Committed, routing.commit(session, "Fazer o deploy no GitHub"))
+        assertEquals("Fazer o deploy no GitHub", editor.committed)
+    }
 }
 
 private class RecordingSessionPort(
