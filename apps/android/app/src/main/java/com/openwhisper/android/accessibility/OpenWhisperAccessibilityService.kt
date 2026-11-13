@@ -21,6 +21,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import com.openwhisper.android.DictationRecovery
 import com.openwhisper.android.MainActivity
 import com.openwhisper.android.audio.AndroidAudioRecorder
 import com.openwhisper.android.dictation.BufferedDictationBackend
@@ -96,7 +97,7 @@ class OpenWhisperAccessibilityService : AccessibilityService() {
                 // Deliver live mic levels to the overlay's equalizer on the UI thread.
                 handler.post { if (::overlay.isInitialized) overlay.onAmplitude(level) }
             },
-            client = OpenAiHttpTranscriptionClient(secrets::load),
+            client = OpenAiHttpTranscriptionClient(secrets::load, settings::transcriptionOptions),
             recordingStore = recordingStore,
             background = ExecutorBackgroundRunner(backgroundExecutor),
             callbacks = MainThreadCallbackDispatcher(handler),
@@ -264,6 +265,7 @@ class OpenWhisperAccessibilityService : AccessibilityService() {
     }
 
     private fun openDictationRecovery(message: String) {
+        DictationRecovery.post(message)
         startActivity(
             Intent(this, MainActivity::class.java).apply {
                 addFlags(
@@ -271,7 +273,6 @@ class OpenWhisperAccessibilityService : AccessibilityService() {
                         Intent.FLAG_ACTIVITY_CLEAR_TOP or
                         Intent.FLAG_ACTIVITY_SINGLE_TOP,
                 )
-                putExtra(MainActivity.EXTRA_DICTATION_ERROR, message)
             },
         )
     }

@@ -21,6 +21,8 @@ import android.view.accessibility.AccessibilityManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.ScrollView
 import android.widget.Switch
 import android.widget.TextView
@@ -34,9 +36,13 @@ import com.openwhisper.android.settings.SecureApiKeyStore
 import com.openwhisper.android.settings.SettingsRepository
 import com.openwhisper.android.transcription.OpenAiHttpTranscriptionClient
 import com.openwhisper.android.transcription.TranscriptionAudio
+import com.openwhisper.android.transcription.TranscriptionLanguage
+import com.openwhisper.android.transcription.TranscriptionModels
+import com.openwhisper.android.transcription.Vocabulary
 import com.openwhisper.android.update.AndroidUpdateClient
 import com.openwhisper.android.update.UpdateManifest
 import com.openwhisper.android.update.UpdateNotifier
+import com.openwhisper.android.update.UpdatePackageVerifier
 import java.io.File
 import java.util.concurrent.Executors
 
@@ -69,17 +75,18 @@ class MainActivity : Activity() {
         settingsRepository = SettingsRepository(this)
         recordingStore = RecordingStore(this)
         setContentView(buildContent())
-        UpdateNotifier.fromIntent(intent)?.let { update ->
-            window.decorView.post { showUpdatePrompt(update) }
-        }
-        showDictationRecoveryFrom(intent)
+        if (UpdateNotifier.isUpdateIntent(intent)) checkForUpdates(showUpToDate = false)
+        showPendingDictationRecovery()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        UpdateNotifier.fromIntent(intent)?.let(::showUpdatePrompt)
-        showDictationRecoveryFrom(intent)
+        if (UpdateNotifier.isUpdateIntent(intent)) {
+            promptedVersionCode = null
+            checkForUpdates(showUpToDate = false)
+        }
+        showPendingDictationRecovery()
     }
 
     override fun onResume() {
@@ -185,6 +192,8 @@ class MainActivity : Activity() {
             setTextColor(Color.rgb(82, 82, 96))
         })
 
+        addTranscriptionSettings(content)
+
         content.addView(Button(this).apply {
             text = getString(R.string.open_demo)
             isAllCaps = false
@@ -220,6 +229,121 @@ class MainActivity : Activity() {
         })
 
         return ScrollView(this).apply { addView(content) }
+    }
+
+    private fun addTranscriptionSettings(content: LinearLayout) {
+        content.addView(TextView(this).apply {
+            text = getString(R.string.transcription_settings)
+            textSize = 19f
+            setTextColor(Color.rgb(35, 35, 45))
+            setPadding(0, dp(26), 0, dp(8))
+        })
+        content.addView(TextView(this).apply {
+            text = getString(R.string.transcription_language_label)
+            textSize = 16f
+            setTextColor(Color.rgb(24, 24, 32))
+        })
+        val selectedLanguage = settingsRepository.transcriptionLanguage
+        content.addView(RadioGroup(this).apply {
+            orientation = RadioGroup.VERTICAL
+            TranscriptionLanguage.entries.forEach { language ->
+                addView(RadioButton(context).apply {
+                    id = View.generateViewId()
+                    text = getString(language.labelRes)
+                    textSize = 15f
+                    setPadding(dp(4), dp(6), 0, dp(6))
+                    tag = language
+                    isChecked = language == selectedLanguage
+                })
+            }
+            setOnCheckedChangeListener { group, checkedId ->
+                val language = group.findViewById<RadioButton>(checkedId)?.tag as? TranscriptionLanguage
+                    ?: return@setOnCheckedChangeListener
+                settingsRepository.transcriptionLanguage = language
+            }
+        })
+        content.addView(TextView(this).apply {
+            text = getString(R.string.transcription_language_explanation)
+            setTextColor(Color.rgb(82, 82, 96))
+            setPadding(0, 0, 0, dp(14))
+        })
+
+        content.addView(TextView(this).apply {
+            text = getString(R.string.transcription_model_label)
+            textSize = 16f
+            setTextColor(Color.rgb(24, 24, 32))
+        })
+        val selected = settingsRepository.transcriptionModel
+        content.addView(RadioGroup(this).apply {
+            orientation = RadioGroup.VERTICAL
+            TranscriptionModels.ALL.forEachIndexed { index, model ->
+                addView(RadioButton(context).apply {
+                    id = View.generateViewId()
+                    text = "${getString(model.labelRes)}\n${getString(model.descriptionRes)}"
+                    textSize = 15f
+                    setPadding(dp(4), dp(6), 0, dp(6))
+                    tag = index
+                    isChecked = model.id == selected.id
+                })
+            }
+            setOnCheckedChangeListener { group, checkedId ->
+                val index = group.findViewById<RadioButton>(checkedId)?.tag as? Int
+                    ?: return@setOnCheckedChangeListener
+                settingsRepository.transcriptionModel = TranscriptionModels.ALL[index]
+            }
+        })
+
+        content.addView(TextView(this).apply {
+            text = getString(R.string.vocabulary_label)
+            textSize = 16f
+            setTextColor(Color.rgb(24, 24, 32))
+            setPadding(0, dp(18), 0, dp(4))
+        })
+        content.addView(TextView(this).apply {
+            text = getString(R.string.vocabulary_explanation)
+            setTextColor(Color.rgb(82, 82, 96))
+        })
+        val vocabulary = EditText(this).apply {
+            hint = getString(R.string.vocabulary_hint)
+            inputType = InputType.TYPE_CLASS_TEXT or
+                InputType.TYPE_TEXT_FLAG_MULTI_LINE or
+                InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            isSingleLine = false
+            minLines = 4
+            gravity = Gravity.TOP or Gravity.START
+            contentDescription = getString(R.string.vocabulary_label)
+            setText(settingsRepository.vocabularyText)
+        }
+        content.addView(vocabulary)
+        val vocabularyStatus = TextView(this).apply {
+            setTextColor(Color.rgb(82, 82, 96))
+        }
+        fun showCount() {
+            vocabularyStatus.text = getString(
+                R.string.vocabulary_count,
+                Vocabulary.parse(settingsRepository.vocabularyText).size,
+                Vocabulary.MAX_TERMS,
+            )
+        }
+        showCount()
+        content.addView(LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            addView(
+                vocabularyStatus,
+                LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f),
+            )
+            addView(Button(context).apply {
+                text = getString(R.string.save)
+                isAllCaps = false
+                setOnClickListener {
+                    val terms = Vocabulary.parse(vocabulary.text.toString())
+                    settingsRepository.vocabularyText = terms.joinToString("\n")
+                    vocabulary.setText(settingsRepository.vocabularyText)
+                    showCount()
+                }
+            })
+        })
     }
 
     @Deprecated("Legacy Activity result API is sufficient for the platform-only UI.")
@@ -367,7 +491,10 @@ class MainActivity : Activity() {
         } else {
             null
         }
-        return OpenAiHttpTranscriptionClient(secretStore::load).transcribe(
+        return OpenAiHttpTranscriptionClient(
+            secretStore::load,
+            settingsRepository::transcriptionOptions,
+        ).transcribe(
             TranscriptionAudio(
                 file = file,
                 mimeType = recording.mimeType,
@@ -553,7 +680,11 @@ class MainActivity : Activity() {
             .show()
         updateExecutor.execute {
             val destination = File(File(cacheDir, "updates"), "OpenWhisper-Android.apk")
-            val result = runCatching { updateClient.download(update, destination) }
+            val result = runCatching {
+                updateClient.download(update, destination).also { file ->
+                    UpdatePackageVerifier.requireTrustedUpdate(this, file, BuildConfig.VERSION_CODE)
+                }
+            }
             runOnUiThread {
                 progress.dismiss()
                 if (isFinishing || isDestroyed) return@runOnUiThread
@@ -612,9 +743,8 @@ class MainActivity : Activity() {
             .show()
     }
 
-    private fun showDictationRecoveryFrom(source: Intent) {
-        val error = source.getStringExtra(EXTRA_DICTATION_ERROR) ?: return
-        source.removeExtra(EXTRA_DICTATION_ERROR)
+    private fun showPendingDictationRecovery() {
+        val error = DictationRecovery.take() ?: return
         window.decorView.post {
             if (isFinishing || isDestroyed) return@post
             AlertDialog.Builder(this)
@@ -628,7 +758,6 @@ class MainActivity : Activity() {
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     companion object {
-        const val EXTRA_DICTATION_ERROR = "com.openwhisper.android.extra.DICTATION_ERROR"
         private const val REQUEST_AUDIO = 100
         const val REQUEST_IMPORT_AUDIO = 101
     }

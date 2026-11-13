@@ -36,6 +36,39 @@ class OpenAiRequestFactoryTest {
     }
 
     @Test
+    fun sendsEachDictionaryTermAsAKeywordsField() {
+        val body = OpenAiRequestFactory(boundaryFactory = { "b" }).create(
+            apiKey = "sk-test",
+            wav = byteArrayOf(1),
+            model = "gpt-transcribe",
+            keywords = listOf("OpenWhisper", "PIX"),
+        ).body.decodeToString()
+
+        assertTrue(body.contains("name=\"keywords[]\"\r\n\r\nOpenWhisper\r\n"))
+        assertTrue(body.contains("name=\"keywords[]\"\r\n\r\nPIX\r\n"))
+    }
+
+    @Test
+    fun sendsTheLanguageCodeOnlyWhenSet() {
+        val factory = OpenAiRequestFactory(boundaryFactory = { "b" })
+        val withLanguage = factory.create("sk-test", byteArrayOf(1), language = "pt").body.decodeToString()
+        val automatic = factory.create("sk-test", byteArrayOf(1), language = null).body.decodeToString()
+
+        assertTrue(withLanguage.contains("name=\"language\"\r\n\r\npt\r\n"))
+        assertTrue(!automatic.contains("name=\"language\""))
+    }
+
+    @Test
+    fun omitsKeywordsWhenTheDictionaryIsEmpty() {
+        val body = OpenAiRequestFactory(boundaryFactory = { "b" }).create(
+            apiKey = "sk-test",
+            wav = byteArrayOf(1),
+        ).body.decodeToString()
+
+        assertTrue(!body.contains("keywords[]"))
+    }
+
+    @Test
     fun parsesSuccessfulTranscriptionResponse() {
         assertEquals(
             "Hello from Android.",

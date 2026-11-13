@@ -8,6 +8,7 @@ import java.net.URL
 
 class OpenAiHttpTranscriptionClient(
     private val apiKey: () -> String?,
+    private val options: () -> TranscriptionOptions = { TranscriptionOptions.DEFAULT },
     private val requestFactory: OpenAiRequestFactory = OpenAiRequestFactory(),
 ) : TranscriptionClient {
     override fun transcribe(audio: TranscriptionAudio): String {
@@ -16,17 +17,22 @@ class OpenAiHttpTranscriptionClient(
         if (!audio.file.exists() || audio.file.length() == 0L) {
             throw TranscriptionException("The saved audio file is empty")
         }
-        if (audio.pcmSampleRate != null) return transcribePcm(key, audio)
+        val settings = options()
+        if (audio.pcmSampleRate != null) return transcribePcm(key, settings, audio)
         if (audio.file.length() > MAX_UPLOAD_BYTES) {
             throw TranscriptionException(
                 "This audio file is larger than 24 MB. Use a smaller MP3/M4A, " +
                     "split the file, or import a PCM WAV file.",
             )
         }
-        return transcribeRequest(key, audio.file.readBytes(), "")
+        return transcribeRequest(key, settings, audio.file.readBytes(), "")
     }
 
-    private fun transcribePcm(key: String, audio: TranscriptionAudio): String {
+    private fun transcribePcm(
+        key: String,
+        settings: TranscriptionOptions,
+        audio: TranscriptionAudio,
+    ): String {
         val sampleRate = requireNotNull(audio.pcmSampleRate)
         val transcripts = mutableListOf<String>()
         val bytesPerChunk = MAX_PCM_CHUNK_BYTES - (MAX_PCM_CHUNK_BYTES % 2)
@@ -37,15 +43,28 @@ class OpenAiHttpTranscriptionClient(
                 source.readFully(pcm)
                 val wav = WavEncoder.encodePcm16Mono(pcm, sampleRate)
                 val prompt = transcripts.lastOrNull()?.takeLast(1_200).orEmpty()
-                transcripts += transcribeRequest(key, wav, prompt)
+                transcripts += transcribeRequest(key, settings, wav, prompt)
             }
         }
         return transcripts.filter(String::isNotBlank).joinToString(" ").trim()
             .ifBlank { throw TranscriptionException("Transcription was empty") }
     }
 
-    private fun transcribeRequest(key: String, wav: ByteArray, prompt: String): String {
-        val request = requestFactory.create(key, wav, prompt = prompt)
+    private fun transcribeRequest(
+        key: String,
+        settings: TranscriptionOptions,
+        wav: ByteArray,
+        continuation: String,
+    ): String {
+        val model = settings.model
+        val request = requestFactory.create(
+            key,
+            wav,
+            model = model.id,
+            prompt = Vocabulary.prompt(model, settings.language, settings.vocabulary, continuation),
+            keywords = if (model.supportsKeywords) settings.vocabulary else emptyList(),
+            language = settings.language.apiCode,
+        )
         val connection = URL(request.url).openConnection() as HttpURLConnection
         return try {
             connection.requestMethod = "POST"

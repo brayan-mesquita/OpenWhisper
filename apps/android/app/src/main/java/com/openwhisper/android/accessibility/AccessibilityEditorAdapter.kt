@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.accessibility.AccessibilityNodeInfo
 import com.openwhisper.android.editor.EditableNode
+import com.openwhisper.android.editor.EditorHintPolicy
 import com.openwhisper.android.editor.EditorSnapshot
 import com.openwhisper.android.editor.FocusedEditorProvider
 
@@ -58,13 +59,22 @@ private class AccessibilityEditableNode(
 ) : EditableNode {
     override val stableId: String = buildStableId(node)
 
-    override fun snapshot(): EditorSnapshot = EditorSnapshot(
-        text = node.text?.toString().orEmpty(),
-        selectionStart = node.textSelectionStart,
-        selectionEnd = node.textSelectionEnd,
-        isPassword = node.isPassword,
-        isSensitive = Build.VERSION.SDK_INT >= 34 && node.isAccessibilityDataSensitive,
-    )
+    override fun snapshot(): EditorSnapshot {
+        val field = EditorHintPolicy.resolve(
+            reportedText = node.text?.toString().orEmpty(),
+            hintText = node.hintText?.toString(),
+            isShowingHintText = node.isShowingHintText,
+            selectionStart = node.textSelectionStart,
+            selectionEnd = node.textSelectionEnd,
+        )
+        return EditorSnapshot(
+            text = field.text,
+            selectionStart = field.selectionStart,
+            selectionEnd = field.selectionEnd,
+            isPassword = node.isPassword,
+            isSensitive = Build.VERSION.SDK_INT >= 34 && node.isAccessibilityDataSensitive,
+        )
+    }
 
     override fun setText(text: String): Boolean {
         val arguments = Bundle().apply {

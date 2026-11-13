@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">OpenWhisper</string>
+    <string name="app_name" translatable="false">OpenWhisper</string>
     <string name="accessibility_description">Shows a user-controlled dictation microphone near the active keyboard and inserts only the transcript you request into the field that was focused when recording began.</string>
     <string name="main_tagline">Dictate into any safe text field while keeping your current keyboard.</string>
     <string name="accessibility_service_label">Accessibility service</string>
@@ -8,7 +8,7 @@
     <string name="microphone_permission_label">Microphone permission</string>
     <string name="grant_microphone">Grant microphone permission</string>
     <string name="api_key_label">OpenAI API key</string>
-    <string name="api_key_hint">sk-…</string>
+    <string name="api_key_hint" translatable="false">sk-…</string>
     <string name="clear">Clear</string>
     <string name="save_securely">Save securely</string>
     <string name="demo_mode">Deterministic demo transcription</string>
@@ -37,7 +37,7 @@
     <string name="not_saved">not saved</string>
     <string name="demo_title">OpenWhisper end-to-end test</string>
     <string name="demo_instructions">Tap the first field. The microphone should appear beside the A key. The password field must never show it.</string>
-    <string name="demo_initial_text">Hello </string>
+    <string name="demo_initial_text" translatable="false">Hello </string>
     <string name="safe_dictation_field">Safe dictation field</string>
     <string name="password_field_hint">Password field (overlay forbidden)</string>
     <string name="password_field">Password field</string>
@@ -71,4 +71,25 @@
     <string name="up_to_date_message">You already have the latest version.</string>
     <string name="update_notification_channel">App updates</string>
     <string name="update_notification_message">Version %1$s is ready. Tap to update.</string>
+    <string name="transcription_settings">Transcription</string>
+    <string name="transcription_model_label">OpenAI model</string>
+    <string name="vocabulary_label">Personal dictionary</string>
+    <string name="vocabulary_explanation">Words, names and acronyms the transcription usually gets wrong, including English technical terms. One per line. They are sent with every request to improve recognition.</string>
+    <string name="vocabulary_hint" translatable="false">Git\nGitHub\ndeploy\nMCP</string>
+    <string name="transcription_language_label">Spoken language</string>
+    <string name="transcription_language_explanation">A fixed language reduces mistakes. English technical terms are still recognized; add them to the dictionary for best results.</string>
+    <string name="language_pt_br">Portuguese (Brazil)</string>
+    <string name="language_auto">Automatic</string>
+    <string name="language_en">English</string>
+    <string name="language_es">Spanish</string>
+    <string name="model_gpt_transcribe">GPT Transcribe (recommended)</string>
+    <string name="model_gpt_transcribe_description">Best accuracy. Uses your dictionary as keywords. ~US$0.0045/min</string>
+    <string name="model_gpt_4o_mini_transcribe">GPT-4o mini Transcribe (cheapest)</string>
+    <string name="model_gpt_4o_mini_transcribe_description">Lower cost, slightly less accurate. Dictionary goes in the prompt. ~US$0.003/min</string>
+    <string name="model_gpt_4o_transcribe">GPT-4o Transcribe (legacy)</string>
+    <string name="model_gpt_4o_transcribe_description">Deprecated by OpenAI. Dictionary goes in the prompt. ~US$0.006/min</string>
+    <string name="model_whisper_1">Whisper (legacy)</string>
+    <string name="model_whisper_1_description">Deprecated by OpenAI. Short prompt limit: only part of a large dictionary fits. US$0.006/min</string>
+    <string name="vocabulary_count">%1$d of %2$d terms saved</string>
+    <string name="save">Save</string>
 </resources>

@@ -34,6 +34,8 @@ class OpenAiRequestFactory(
         wav: ByteArray,
         model: String = "gpt-transcribe",
         prompt: String = "",
+        keywords: List<String> = emptyList(),
+        language: String? = null,
     ): TranscriptionHttpRequest {
         require(apiKey.isNotBlank()) { "API key is required" }
         require(wav.isNotEmpty()) { "WAV audio is required" }
@@ -44,10 +46,22 @@ class OpenAiRequestFactory(
         output.writeUtf8("Content-Disposition: form-data; name=\"model\"\r\n\r\n")
         output.writeUtf8(model)
         output.writeUtf8("\r\n")
+        if (!language.isNullOrBlank()) {
+            output.writeUtf8("--$boundary\r\n")
+            output.writeUtf8("Content-Disposition: form-data; name=\"language\"\r\n\r\n")
+            output.writeUtf8(language)
+            output.writeUtf8("\r\n")
+        }
         if (prompt.isNotBlank()) {
             output.writeUtf8("--$boundary\r\n")
             output.writeUtf8("Content-Disposition: form-data; name=\"prompt\"\r\n\r\n")
             output.writeUtf8(prompt)
+            output.writeUtf8("\r\n")
+        }
+        for (keyword in keywords) {
+            output.writeUtf8("--$boundary\r\n")
+            output.writeUtf8("Content-Disposition: form-data; name=\"keywords[]\"\r\n\r\n")
+            output.writeUtf8(keyword)
             output.writeUtf8("\r\n")
         }
         output.writeUtf8("--$boundary\r\n")
